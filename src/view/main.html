@@ -3,17 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{codiconsUri}}" rel="stylesheet" />
+    <script type="module" src="{{toolkitUri}}"></script>
     <title>Unity Error Predictor</title>
+    <style>
+        body {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .input-group vscode-text-field {
+            flex-grow: 1;
+        }
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .button-group vscode-button {
+            width: 100%;
+        }
+        #results-container {
+            font-family: var(--vscode-editor-font-family);
+            font-size: var(--vscode-editor-font-size);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .result-item {
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .result-item:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+        .result-item .codicon {
+            font-size: 16px;
+            margin-top: 2px;
+        }
+        .result-item.error { border-left: 3px solid var(--vscode-errorForeground); }
+        .result-item.error .codicon { color: var(--vscode-errorForeground); }
+        .result-item.warning { border-left: 3px solid var(--vscode-testing-iconQueued); }
+        .result-item.warning .codicon { color: var(--vscode-testing-iconQueued); }
+        .result-item.info { border-left: 3px solid var(--vscode-gitDecoration-untrackedResourceForeground); }
+        .result-item.info .codicon { color: var(--vscode-gitDecoration-untrackedResourceForeground); }
+        
+        .result-item-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .result-message {
+            font-weight: bold;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .result-location {
+            font-size: 0.9em;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
 </head>
 <body>
-    <input type="text" id="directory-input" placeholder="Enter directory path...">
-    <button id="start-btn">予測を開始</button>
-    <button id="clear-btn">クリア</button>
-    <button id="stop-btn">途中停止</button>
+    <div class="input-group">
+        <vscode-text-field id="directory-input" placeholder="Select a project to analyze..."></vscode-text-field>
+        <vscode-button id="browse-btn" appearance="secondary">参照...</vscode-button>
+    </div>
 
-    <hr>
+    <div class="button-group">
+        <vscode-button id="start-btn">
+            <span slot="start" class="codicon codicon-play"></span>
+            開始
+        </vscode-button>
+        <vscode-button id="stop-btn" appearance="secondary">
+            <span slot="start" class="codicon codicon-stop"></span>
+            停止
+        </vscode-button>
+        <vscode-button id="clear-btn" appearance="secondary">
+            <span slot="start" class="codicon codicon-clear-all"></span>
+            クリア
+        </vscode-button>
+    </div>
+
+    <vscode-divider></vscode-divider>
+
     <div id="status">待機中</div>
-    <ul id="results-list"></ul>
+    <div id="results-container"></div>
 
     <script src="{{scriptUri}}"></script>
 </body>
