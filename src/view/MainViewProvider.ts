@@ -116,7 +116,7 @@ export class MainViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        const htmlPath = path.join(this._extensionUri.fsPath, 'src', 'view', 'main.html');
+        const htmlPath = path.join(this._extensionUri.fsPath, 'out', 'view', 'main.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf8');
         const getUri = (...p: string[]) => webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, ...p));
         return htmlContent
