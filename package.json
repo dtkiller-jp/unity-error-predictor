@@ -39,11 +39,6 @@
           "type": "string",
           "default": "",
           "description": "Path to the UnityErrorPredictor.Analyzer.exe executable."
-        },
-        "unityErrorPredictor.unityEditorPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the Unity Editor installation folder (e.g., C:\\Program Files\\Unity\\Hub\\Editor\\2022.3.20f1\\Editor)"
         }
       }
     }

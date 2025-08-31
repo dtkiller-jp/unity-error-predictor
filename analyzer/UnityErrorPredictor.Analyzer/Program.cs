@@ -4,112 +4,172 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.MSBuild;
 
 public class Program
 {
     public static async Task Main(string[] args)
     {
-        if (args.Length < 1 || !Directory.Exists(args[0]))
+        if (args.Length < 2)
         {
-            Console.Error.WriteLine("Error: Please provide a valid project directory path.");
-            Environment.Exit(1);
-        }
-        var projectPath = args[0];
-        var unityEditorPath = args.Length > 1 ? args[1] : null;
-
-        var csFiles = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories);
-        if (!csFiles.Any())
-        {
-            var infoResult = new { Message = "Info: No C# files found.", Severity = "Info" };
-            Console.WriteLine(JsonSerializer.Serialize(infoResult));
+            Console.Error.WriteLine("Error: Insufficient arguments. Requires project path and mode ('fast' or 'deep').");
             return;
         }
+        var projectPath = args[0];
+        var mode = args[1];
 
-        var syntaxTrees = new List<SyntaxTree>();
-        foreach (var file in csFiles)
+        if (mode == "fast")
         {
-            try
-            {
-                var sourceText = await File.ReadAllTextAsync(file);
-                syntaxTrees.Add(CSharpSyntaxTree.ParseText(sourceText, path: file));
-            }
-            catch (Exception ex)
-            {
-                var errorResult = new { FilePath = file, Line = 0, Severity = "Error", Message = $"Failed to read file: {ex.Message}" };
-                Console.WriteLine(JsonSerializer.Serialize(errorResult));
-            }
+            await RunFastAnalysis(projectPath);
         }
-
-        var references = FindAllReferences(projectPath, unityEditorPath);
-
-        var compilation = CSharpCompilation.Create("UnityProjectAnalysis")
-            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-            .AddReferences(references)
-            .AddSyntaxTrees(syntaxTrees);
-        
-        var diagnostics = compilation.GetDiagnostics();
-
-        foreach (var diagnostic in diagnostics)
+        else if (mode == "deep")
         {
-            if (diagnostic.IsSuppressed || diagnostic.Severity < DiagnosticSeverity.Warning || diagnostic.Location.Kind != LocationKind.SourceFile)
-            {
-                continue;
-            }
-
-            var location = diagnostic.Location.GetLineSpan();
-            var result = new
-            {
-                FilePath = location.Path,
-                Line = location.StartLinePosition.Line,
-                Severity = diagnostic.Severity.ToString(),
-                Id = diagnostic.Id,
-                Message = diagnostic.GetMessage()
-            };
-            Console.WriteLine(JsonSerializer.Serialize(result));
+            await RunDeepAnalysis(projectPath);
         }
     }
 
-    private static List<MetadataReference> FindAllReferences(string projectPath, string? unityEditorPath)
+    private static async Task RunFastAnalysis(string projectPath)
     {
-        var references = new List<MetadataReference>();
+        var csFiles = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories);
+        var totalFiles = csFiles.Length;
+        var processedFiles = 0;
 
-        if (string.IsNullOrEmpty(unityEditorPath) || !Directory.Exists(unityEditorPath))
+        foreach (var file in csFiles)
         {
-            return references; // Unity Editorのパスがなければ何もできない
-        }
+            processedFiles++;
+            var progressInfo = new { message = $"({processedFiles}/{totalFiles}) {Path.GetFileName(file)}" };
+            OutputJson(new { type = "progress", payload = progressInfo });
 
-        // 1. Unity Editorに同梱されている.NET標準ライブラリへの参照を追加
-        //    これにより、'Object'の重複定義エラー(CS0433)を回避する
-        string monoBleedingEdgePath = Path.Combine(unityEditorPath, "Data", "MonoBleedingEdge", "lib", "mono", "unityjit");
-        if (Directory.Exists(monoBleedingEdgePath))
-        {
-            references.Add(MetadataReference.CreateFromFile(Path.Combine(monoBleedingEdgePath, "mscorlib.dll")));
-            references.Add(MetadataReference.CreateFromFile(Path.Combine(monoBleedingEdgePath, "System.dll")));
-            references.Add(MetadataReference.CreateFromFile(Path.Combine(monoBleedingEdgePath, "System.Core.dll")));
-        }
-
-        // 2. Unityエンジンの主要モジュールへの参照を追加
-        string engineModulePath = Path.Combine(unityEditorPath, "Data", "Managed", "UnityEngine");
-        if (Directory.Exists(engineModulePath))
-        {
-            references.Add(MetadataReference.CreateFromFile(Path.Combine(engineModulePath, "UnityEngine.CoreModule.dll")));
-        }
-        
-        // 3. プロジェクトのライブラリフォルダから、コンパイル済みアセンブリ(パッケージ等)をすべて参照
-        //    これにより、'UnityEngine.UI'が見つからないエラー(CS0234)を解決する
-        //    注意: このフォルダは、Unity Editorでプロジェクトを一度開かないと生成されない
-        string scriptAssembliesPath = Path.Combine(projectPath, "Library", "ScriptAssemblies");
-        if (Directory.Exists(scriptAssembliesPath))
-        {
-            var dllFiles = Directory.GetFiles(scriptAssembliesPath, "*.dll");
-            foreach (var dllFile in dllFiles)
+            try
             {
-                references.Add(MetadataReference.CreateFromFile(dllFile));
+                var sourceText = await File.ReadAllTextAsync(file);
+                var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, path: file);
+                foreach (var diagnostic in syntaxTree.GetDiagnostics())
+                {
+                    OutputDiagnostic(diagnostic, new HashSet<string>());
+                }
+            }
+            catch { /* Ignore file read errors */ }
+        }
+    }
+
+    private static async Task RunDeepAnalysis(string projectPath)
+    {
+        try
+        {
+            if (!MSBuildLocator.IsRegistered)
+            {
+                var vsInstance = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(i => i.Version).FirstOrDefault();
+                if (vsInstance == null)
+                {
+                    var errorResult = new { Message = "Error: MSBuild instance not found. Please ensure Visual Studio with the '.NET desktop development' workload is installed.", Severity = "Error" };
+                    OutputJson(new { type = "diagnostic", payload = errorResult });
+                    return;
+                }
+                MSBuildLocator.RegisterInstance(vsInstance);
             }
         }
+        catch (Exception ex)
+        {
+            var errorResult = new { Message = $"Error initializing MSBuild: {ex.Message}", Severity = "Error" };
+            OutputJson(new { type = "diagnostic", payload = errorResult });
+            return;
+        }
 
-        return references;
+        using (var workspace = MSBuildWorkspace.Create())
+        {
+            workspace.WorkspaceFailed += (s, e) => {
+                var warningResult = new { Message = $"Workspace Info: {e.Diagnostic.Message}", Severity = "Warning" };
+                OutputJson(new { type = "diagnostic", payload = warningResult });
+            };
+
+            var slnFiles = Directory.GetFiles(projectPath, "*.sln", SearchOption.AllDirectories);
+            var solutionPath = slnFiles.OrderBy(f => f.Length).FirstOrDefault();
+
+            if (solutionPath == null)
+            {
+                var errorResult = new { Message = "Error: No .sln file found. Please generate project files from Unity Editor (Edit > Preferences > External Tools > Regenerate project files).", Severity = "Error" };
+                OutputJson(new { type = "diagnostic", payload = errorResult });
+                return;
+            }
+
+            var solution = await workspace.OpenSolutionAsync(solutionPath);
+            var totalProjects = solution.Projects.Count();
+            var processedProjects = 0;
+
+            // --- ▼▼▼ 最重要修正点 ▼▼▼ ---
+            // 全てのプロジェクトから、全ての警告抑制設定を事前に収集し、マスターリストを作成
+            var masterNoWarnSet = new HashSet<string>();
+            foreach (var proj in solution.Projects)
+            {
+                foreach (var warnId in ParseNoWarnFromCsproj(proj.FilePath))
+                {
+                    masterNoWarnSet.Add(warnId);
+                }
+            }
+            // --- ▲▲▲ 最重要修正点 ▲▲▲ ---
+
+            foreach (var project in solution.Projects)
+            {
+                processedProjects++;
+                var progressInfo = new { message = $"({processedProjects}/{totalProjects}) Analyzing project: {project.Name}..." };
+                OutputJson(new { type = "progress", payload = progressInfo });
+                
+                var compilation = await project.GetCompilationAsync();
+                if (compilation == null) continue;
+
+                foreach (var diagnostic in compilation.GetDiagnostics())
+                {
+                    // マスターリストを使ってフィルタリング
+                    OutputDiagnostic(diagnostic, masterNoWarnSet);
+                }
+            }
+        }
+    }
+
+    private static HashSet<string> ParseNoWarnFromCsproj(string? csprojPath)
+    {
+        var noWarnSet = new HashSet<string>();
+        if (string.IsNullOrEmpty(csprojPath) || !File.Exists(csprojPath)) return noWarnSet;
+        
+        try
+        {
+            var doc = XDocument.Load(csprojPath);
+            XNamespace ns = doc.Root?.GetDefaultNamespace() ?? XNamespace.None;
+            var noWarnValues = doc.Descendants(ns + "NoWarn").Select(e => e.Value);
+            var allWarns = string.Join(";", noWarnValues)
+                                 .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                 .Select(s => s.Trim());
+            
+            foreach(var warn in allWarns)
+            {
+                noWarnSet.Add(warn.StartsWith("CS") ? warn : "CS" + warn);
+            }
+        }
+        catch { /* XML解析エラーは無視 */ }
+        return noWarnSet;
+    }
+
+    private static void OutputDiagnostic(Diagnostic diagnostic, ISet<string> noWarnSet)
+    {
+        if (diagnostic.IsSuppressed || 
+            diagnostic.Severity < DiagnosticSeverity.Warning || 
+            diagnostic.Location.Kind != LocationKind.SourceFile ||
+            noWarnSet.Contains(diagnostic.Id))
+        {
+            return;
+        }
+        var location = diagnostic.Location.GetLineSpan();
+        var result = new { FilePath = location.Path, Line = location.StartLinePosition.Line, Severity = diagnostic.Severity.ToString(), Id = diagnostic.Id, Message = diagnostic.GetMessage() };
+        OutputJson(new { type = "diagnostic", payload = result });
+    }
+
+    private static void OutputJson(object data)
+    {
+        Console.WriteLine(JsonSerializer.Serialize(data));
     }
 }

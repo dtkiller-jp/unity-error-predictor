@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UnityErrorPredictor.Analyzer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ad5b0aa3413a0dcca2194a073159601f1c9071a4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4006a286b6b26dcbcf7bc7b68bcecb96e9f88a41")]
 [assembly: System.Reflection.AssemblyProductAttribute("UnityErrorPredictor.Analyzer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UnityErrorPredictor.Analyzer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

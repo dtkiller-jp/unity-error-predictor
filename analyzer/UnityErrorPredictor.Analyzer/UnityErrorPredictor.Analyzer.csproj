@@ -2,26 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- ターゲットフレームワークを .NET 8.0 に明示 -->
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- RollForward設定を追加して、より新しいランタイムでも動くようにする -->
-    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 
-      Roslyn関連のパッケージバージョンを統一します。
-      4.8.0 は .NET 8.0 との互換性が高く安定しています。
-    -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.8.0" />
-    
-    <!-- 
-      MSBuildLocatorも互換性のあるバージョンに指定します。
-    -->
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.9.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.14.0" />
   </ItemGroup>
 
 </Project>
