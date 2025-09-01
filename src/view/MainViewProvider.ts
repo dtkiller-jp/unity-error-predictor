@@ -18,7 +18,7 @@ export class MainViewProvider implements vscode.WebviewViewProvider {
         this._view = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [ this._extensionUri, vscode.Uri.joinPath(this._extensionUri, 'node_modules'), vscode.Uri.joinPath(this._extensionUri, 'out') ]
+            localResourceRoots: [ this._extensionUri, vscode.Uri.joinPath(this._extensionUri, 'node_modules') ]
         };
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         webviewView.webview.onDidReceiveMessage(async data => {
@@ -115,17 +115,25 @@ export class MainViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    // --- ▼▼▼ ここが最後の、そして最も重要な修正点です ▼▼▼ ---
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        const htmlPath = path.join(this._extensionUri.fsPath, 'src', 'view', 'main.html');
+        // HTMLファイルへのパスを、コンパイル後の 'out' ディレクトリに変更
+        const htmlPath = path.join(this._extensionUri.fsPath, 'out', 'view', 'main.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf8');
-        const getUri = (...p: string[]) => webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, ...p));
-        
-        // ▼▼▼ 読み込むのはバンドルされた 'bundle.js' だけ ▼▼▼
-        const scriptUri = getUri('out', 'view', 'bundle.js');
-        const codiconsUri = getUri('node_modules', '@vscode', 'codicons', 'dist', 'codicon.css');
 
+        // URIを生成するヘルパー関数
+        const getUri = (...p: string[]) => webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, ...p));
+
+        // 全てのリソースへのURIを、コンパイル後の 'out' ディレクトリ基準で生成
+        const scriptUri = getUri('out', 'view', 'main.js');
+        const codiconsUri = getUri('node_modules', '@vscode', 'codicons', 'dist', 'codicon.css');
+        const toolkitUri = getUri('node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.js');
+
+        // HTML内のプレースホルダーを置換
         return htmlContent
             .replace('{{scriptUri}}', scriptUri.toString())
-            .replace('{{codiconsUri}}', codiconsUri.toString());
+            .replace('{{codiconsUri}}', codiconsUri.toString())
+            .replace('{{toolkitUri}}', toolkitUri.toString());
     }
+    // --- ▲▲▲ ここまでが最後の、そして最も重要な修正点です ▲▲▲ ---
 }
