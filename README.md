@@ -1,51 +1,71 @@
-# Unity Error Predictor
+# unity-error-predictor README
 
-A VS Code extension to predict compile errors and warnings for Unity C# projects, designed to be fast and accurate.
-
-This extension provides two distinct analysis modes to fit your workflow.
+This is the README for your extension "unity-error-predictor". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
-- **Side Bar UI**: All operations can be performed from a dedicated view in the side bar.
-- **Directory Selection**: Easily select your Unity project's root directory for analysis.
-- **Real-time Progress**: See which file or project is being analyzed in real-time.
+Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
 
-### Analysis Modes
+For example if there is an image subfolder under your extension project workspace:
 
-1.  **⚡ Fast Check (Syntax)**
-    -   **Purpose**: Instantly find syntax errors like missing semicolons or mismatched brackets during daily coding.
-    -   **Speed**: Extremely fast, completes in seconds.
-    -   **Accuracy**: Perfectly detects C# syntax errors. It does **not** report false-positive dependency errors (e.g., "UnityEngine not found").
+\!\[feature X\]\(images/feature-x.png\)
 
-2.  **🔍 Deep Check (Full)**
-    -   **Purpose**: Perform a full analysis that is nearly identical to the Unity Editor's compilation process, detecting complex dependency errors, type mismatches, and more.
-    -   **Speed**: Slower, as it analyzes the entire project structure.
-    -   **Accuracy**: The highest possible accuracy. It correctly resolves dependencies from your project's `.sln` and `.csproj` files and respects Unity's specific warning suppressions (`<NoWarn>`).
+> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
 ## Requirements
 
-- **.NET 8.0 SDK** (or newer)
-- **Visual Studio** (Community edition is free) with the **".NET desktop development"** workload installed. This is required for the "Deep Check" mode to function correctly.
+If you have any requirements or dependencies, add a section describing those and how to install and configure them.
 
-## How to Use
+## Extension Settings
 
-### One-Time Setup in Unity Editor
+Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
 
-For the "Deep Check" mode to work flawlessly, you must first generate the necessary project files.
+For example:
 
-1.  In the Unity Editor, go to `Edit > Preferences`.
-2.  Select the `External Tools` tab.
-3.  Ensure `External Script Editor` is set to your editor (e.g., Visual Studio Code).
-4.  Click the **`Regenerate project files`** button.
+This extension contributes the following settings:
 
-### Performing Analysis
+* `myExtension.enable`: Enable/disable this extension.
+* `myExtension.thing`: Set to `blah` to do something.
 
-1.  Click the Beaker icon (` beaker `) in the Activity Bar to open the extension's view.
-2.  Select your Unity project's **root folder** (the one containing the `Assets` and `ProjectSettings` folders) using the "Browse..." button, or ensure it's automatically filled if you have the folder open in your workspace.
-3.  Click **"Fast Check"** for a quick syntax scan.
-4.  Click **"Deep Check"** for a complete, high-accuracy analysis.
-5.  Results will appear in the list below. Click on any item to jump directly to the file and line.
+## Known Issues
 
-### Initial Extension Setup
+Calling out known issues can help limit users opening duplicate issues against your extension.
 
-The very first time you run an analysis, the extension will ask you to locate the `UnityErrorPredictor.Analyzer.exe` file. Please select it from the `analyzer/UnityErrorPredictor.Analyzer/bin/Release/net8.0/` folder within this project's source code. This is a one-time setup.
+## Release Notes
+
+Users appreciate release notes as you update your extension.
+
+### 1.0.0
+
+Initial release of ...
+
+### 1.0.1
+
+Fixed issue #.
+
+### 1.1.0
+
+Added features X, Y, and Z.
+
+---
+
+## Following extension guidelines
+
+Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+
+* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+
+## Working with Markdown
+
+You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+
+* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
+* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
+* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+
+## For more information
+
+* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
+* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+
+**Enjoy!**
