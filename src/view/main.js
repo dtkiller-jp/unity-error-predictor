@@ -1,3 +1,12 @@
+import { provideVSCodeDesignSystem, vsCodeButton, vsCodeTextField, vsCodeDivider } from "@vscode/webview-ui-toolkit";
+
+// VS CodeのUIコンポーネントをWebview内で利用可能にする
+provideVSCodeDesignSystem().register(
+    vsCodeButton(),
+    vsCodeTextField(),
+    vsCodeDivider()
+);
+
 (function () {
     const vscode = acquireVsCodeApi();
     

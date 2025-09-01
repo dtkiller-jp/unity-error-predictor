@@ -18,7 +18,7 @@ export class MainViewProvider implements vscode.WebviewViewProvider {
         this._view = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [ this._extensionUri, vscode.Uri.joinPath(this._extensionUri, 'node_modules') ]
+            localResourceRoots: [ this._extensionUri, vscode.Uri.joinPath(this._extensionUri, 'node_modules'), vscode.Uri.joinPath(this._extensionUri, 'out') ]
         };
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         webviewView.webview.onDidReceiveMessage(async data => {
@@ -116,12 +116,16 @@ export class MainViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        const htmlPath = path.join(this._extensionUri.fsPath, 'out', 'view', 'main.html');
+        const htmlPath = path.join(this._extensionUri.fsPath, 'src', 'view', 'main.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf8');
         const getUri = (...p: string[]) => webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, ...p));
+        
+        // ▼▼▼ 読み込むのはバンドルされた 'bundle.js' だけ ▼▼▼
+        const scriptUri = getUri('out', 'view', 'bundle.js');
+        const codiconsUri = getUri('node_modules', '@vscode', 'codicons', 'dist', 'codicon.css');
+
         return htmlContent
-            .replace('{{scriptUri}}', getUri('src', 'view', 'main.js').toString())
-            .replace('{{codiconsUri}}', getUri('node_modules', '@vscode', 'codicons', 'dist', 'codicon.css').toString())
-            .replace('{{toolkitUri}}', getUri('node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.js').toString());
+            .replace('{{scriptUri}}', scriptUri.toString())
+            .replace('{{codiconsUri}}', codiconsUri.toString());
     }
 }

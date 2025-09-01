@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{codiconsUri}}" rel="stylesheet" />
-    <script type="module" src="{{toolkitUri}}"></script>
     <title>Unity Error Predictor</title>
     <style>
         body { padding: 10px; display: flex; flex-direction: column; gap: 15px; }
@@ -22,17 +21,10 @@
         .result-item.warning .codicon { color: var(--vscode-testing-iconQueued); }
         .result-item.info { border-left: 3px solid var(--vscode-gitDecoration-untrackedResourceForeground); }
         .result-item.info .codicon { color: var(--vscode-gitDecoration-untrackedResourceForeground); }
-        
         .result-item-content { display: flex; flex-direction: column; overflow: hidden; min-width: 0; font-size: 0.95em; }
-        /* --- ▼▼▼ 1行表示のためのCSS修正 ▼▼▼ --- */
-        .result-message, .result-location {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .result-message, .result-location { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .result-message { font-weight: bold; }
         .result-location { opacity: 0.8; }
-        /* --- ▲▲▲ 1行表示のためのCSS修正 ▲▲▲ --- */
     </style>
 </head>
 <body>
@@ -40,7 +32,6 @@
         <vscode-text-field id="directory-input" placeholder="Select a project to analyze..."></vscode-text-field>
         <vscode-button id="browse-btn" appearance="secondary">Browse...</vscode-button>
     </div>
-
     <div class="button-grid">
         <vscode-button id="start-fast-btn">
             <span slot="start" class="codicon codicon-zap"></span>
@@ -57,10 +48,10 @@
             <vscode-button id="clear-btn" appearance="secondary">Clear</vscode-button>
         </div>
     </div>
-
     <vscode-divider></vscode-divider>
     <div id="status">Ready</div>
     <div id="results-container"></div>
-    <script src="{{scriptUri}}"></script>
+    <!-- ▼▼▼ 読み込むのは、バンドルされたこのファイルだけ ▼▼▼ -->
+    <script type="module" src="{{scriptUri}}"></script>
 </body>
 </html>
